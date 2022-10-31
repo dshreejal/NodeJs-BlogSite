@@ -48,5 +48,16 @@ router.get('/fetchblogs', async (req, res) => {
     }
 })
 
+//ROUTE 3: Fetch note specific to a user using: GET "/api/blog/fetchuserblogs". Login required
+router.get("/fetchuserblogs", FetchUser, async (req, res) => {
+    try {
+        const blogs = await Blog.find({ user: req.user.id });
+        res.json(blogs);
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send("Internal Server Error");
+    }
+})
+
 
 module.exports = router;
