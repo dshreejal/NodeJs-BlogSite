@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const FetchUser = require('../middleware/FetchUser')
 const Blog = require("../models/Blog");
 const multer = require("multer");
 const storage = multer.diskStorage({
@@ -14,7 +15,7 @@ const upload = multer({ storage: storage })
 
 ////ROUTE 1: Add a new note using: POST "/api/blog/addblog". Login required
 //todo: add login to be able to add blog
-router.post('/addblog', upload.single('img'), async (req, res) => {
+router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
     // If there are errors, return Bad request and the errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -26,7 +27,7 @@ router.post('/addblog', upload.single('img'), async (req, res) => {
         const { title, description } = req.body;
         const img = req.file.filename;
         const blog = new Blog({
-            title, description, img
+            title, description, img, user: req.user.id
         })
         const savedBlog = await blog.save();
         res.json(savedBlog)
