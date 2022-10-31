@@ -14,7 +14,7 @@ app.use(express.json());
 
 //Available routes
 app.use('/api/auth', require("./routes/auth")) //Route for user SignUp, LogIn
-
+app.use('/api/blog', require("./routes/blog")) //Route for Blog- Create, Fetch, Edit, Delete
 
 app.listen(port, () => {
     console.log(`blog-site backend deployed on port http://localhost:${port}`);
