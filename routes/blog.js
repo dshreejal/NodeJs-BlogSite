@@ -60,4 +60,15 @@ router.get("/fetchuserblogs", FetchUser, async (req, res) => {
 })
 
 
+//Route 4: Fect note by ID using: GET "/api/blog/:id". Login not required
+router.get("/:id", async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+        res.json(blog);
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send("Internal Server Error");
+    }
+})
+
 module.exports = router;
