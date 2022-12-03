@@ -13,8 +13,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage })
 
-////ROUTE 1: Add a new note using: POST "/api/blog/addblog". Login required
-//todo: add login to be able to add blog
+////ROUTE 1: Add a new blog using: POST "/api/blog/addblog". Login required
 router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
     // If there are errors, return Bad request and the errors
     const errors = validationResult(req);
@@ -23,7 +22,6 @@ router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
     }
 
     try {
-        // console.log(req.file);
         const { title, description } = req.body;
         const img = req.file.filename;
         const blog = new Blog({
@@ -37,7 +35,7 @@ router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
     }
 })
 
-//ROUTE 2: Fetch all Notes of a using: GET "/api/blog/fetchblogs". Login not required
+//ROUTE 2: Fetch all Blog using: GET "/api/blog/fetchblogs". Login not required
 router.get('/fetchblogs', async (req, res) => {
     try {
         const blogs = await Blog.find({}).populate('user', 'name',);
@@ -48,7 +46,7 @@ router.get('/fetchblogs', async (req, res) => {
     }
 })
 
-//ROUTE 3: Fetch note specific to a user using: GET "/api/blog/fetchuserblogs". Login required
+//ROUTE 3: Fetch blog specific to a user using: GET "/api/blog/fetchuserblogs". Login required
 router.get("/fetchuserblogs", FetchUser, async (req, res) => {
     try {
         const blogs = await Blog.find({ user: req.user.id }).populate('user', 'name',);
@@ -60,7 +58,7 @@ router.get("/fetchuserblogs", FetchUser, async (req, res) => {
 })
 
 
-//Route 4: Fect note by ID using: GET "/api/blog/:id". Login not required
+//Route 4: Fect blog by ID using: GET "/api/blog/:id". Login not required
 router.get("/:id", async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id).populate('user', 'name',);
