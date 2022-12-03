@@ -40,7 +40,7 @@ router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
 //ROUTE 2: Fetch all Notes of a using: GET "/api/blog/fetchblogs". Login not required
 router.get('/fetchblogs', async (req, res) => {
     try {
-        const blogs = await Blog.find({});
+        const blogs = await Blog.find({}).populate('user', 'name',);
         res.json(blogs)
     } catch (error) {
         console.error(error.message);
@@ -51,7 +51,7 @@ router.get('/fetchblogs', async (req, res) => {
 //ROUTE 3: Fetch note specific to a user using: GET "/api/blog/fetchuserblogs". Login required
 router.get("/fetchuserblogs", FetchUser, async (req, res) => {
     try {
-        const blogs = await Blog.find({ user: req.user.id });
+        const blogs = await Blog.find({ user: req.user.id }).populate('user', 'name',);
         res.json(blogs);
     } catch (error) {
         console.log(error.message);
@@ -63,7 +63,7 @@ router.get("/fetchuserblogs", FetchUser, async (req, res) => {
 //Route 4: Fect note by ID using: GET "/api/blog/:id". Login not required
 router.get("/:id", async (req, res) => {
     try {
-        const blog = await Blog.findById(req.params.id);
+        const blog = await Blog.findById(req.params.id).populate('user', 'name',);
         res.json(blog);
     } catch (error) {
         console.log(error.message);
