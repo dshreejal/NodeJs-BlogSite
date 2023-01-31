@@ -69,4 +69,23 @@ router.get("/:id", async (req, res) => {
     }
 })
 
+//Route 5: Delete a blog uisng: DELETE "/api/blog/deleteblog/:id". Login required
+router.delete('/deleteblog/:id', FetchUser, async (req, res) => {
+    try {
+        let blog = await Blog.findById(req.params.id);
+        if (!blog) { return res.status(404).send("Not Found") }
+
+        //Check if user logged in is accessing the blog or not to only allow logged in user to delete
+        if (blog.user.toString() !== req.user.id) {
+            return res.status(401).send("Not Allowed")
+        }
+        blog = await Blog.findByIdAndDelete(req.params.id);
+        res.json(blog)
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Internal Server Error");
+    }
+})
+
+
 module.exports = router;
