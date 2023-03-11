@@ -1,55 +1,77 @@
-const express = require("express")
+const express = require("express");
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const FetchUser = require('../middleware/FetchUser')
+const FetchUser = require('../middleware/FetchUser');
 const Blog = require("../models/Blog");
 const multer = require("multer");
-const fs = require('fs');
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        let dir = "./images";
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
-        cb(null, "./images")
-    }, filename: (req, file, cb) => {
-        cb(null, file.originalname)
-    }
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+// configure cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const upload = multer({ storage: storage })
+
+// configure multer storage for cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    folder: "blog-images",
+    allowedFormats: ["jpg", "jpeg", "png"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
+});
+
+// configure multer upload
+const upload = multer({ storage: storage });
 
 ////ROUTE 1: Add a new blog using: POST "/api/blog/addblog". Login required
-router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
-    // If there are errors, return Bad request and the errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    try {
-        const { title, description } = req.body;
-        const img = req.file.filename;
-        const blog = new Blog({
-            title, description, img, user: req.user.id
-        })
-        const savedBlog = await blog.save();
-        const data = {
-            "_id": savedBlog._id,
-            "user": savedBlog.user,
-            "title": savedBlog.title,
-            "description": savedBlog.description,
-            "img": `${req.secure ? "https" : "http"}://${req.get(
-                "host"
-            )}/images/${savedBlog.img}`,
-            "date": savedBlog.date,
-            "__v": 0
+router.post(
+    "/addblog",
+    upload.single("img"),
+    [
+        body("title", "Title must be at least 3 characters long").isLength({
+            min: 3,
+        }),
+        body("description", "Description must be at least 5 characters long").isLength(
+            { min: 5 }
+        ),
+    ],
+    FetchUser,
+    async (req, res) => {
+        // If there are errors, return Bad request and the errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
         }
-        res.json(data)
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).send("Internal Server Error");
+
+        try {
+            const { title, description } = req.body;
+            const img = req.file.path;
+            const result = await cloudinary.uploader.upload(img);
+            const blog = new Blog({
+                title,
+                description,
+                img: result.secure_url,
+                user: req.user.id,
+            });
+            const savedBlog = await blog.save();
+            const data = {
+                _id: savedBlog._id,
+                user: savedBlog.user,
+                title: savedBlog.title,
+                description: savedBlog.description,
+                img: savedBlog.img,
+                date: savedBlog.date,
+                __v: 0,
+            };
+            res.json(data);
+        } catch (error) {
+            console.error(error.message);
+            res.status(500).send("Internal Server Error");
+        }
     }
-})
+);
 
 //ROUTE 2: Fetch all Blog using: GET "/api/blog/fetchblogs". Login not required
 router.get('/fetchblogs', async (req, res) => {
