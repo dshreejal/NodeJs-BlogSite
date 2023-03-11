@@ -4,8 +4,13 @@ const { body, validationResult } = require('express-validator');
 const FetchUser = require('../middleware/FetchUser')
 const Blog = require("../models/Blog");
 const multer = require("multer");
+const fs = require('fs');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
+        let dir = "./images";
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
         cb(null, "./images")
     }, filename: (req, file, cb) => {
         cb(null, file.originalname)
@@ -28,7 +33,18 @@ router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
             title, description, img, user: req.user.id
         })
         const savedBlog = await blog.save();
-        res.json(savedBlog)
+        const data = {
+            "_id": savedBlog._id,
+            "user": savedBlog.user,
+            "title": savedBlog.title,
+            "description": savedBlog.description,
+            "img": `${req.secure ? "https" : "http"}://${req.get(
+                "host"
+            )}/images/${savedBlog.img}`,
+            "date": savedBlog.date,
+            "__v": 0
+        }
+        res.json(data)
     } catch (error) {
         console.error(error.message);
         res.status(500).send("Internal Server Error");
@@ -39,7 +55,18 @@ router.post('/addblog', upload.single('img'), FetchUser, async (req, res) => {
 router.get('/fetchblogs', async (req, res) => {
     try {
         const blogs = await Blog.find({}).populate('user', 'name',);
-        res.json(blogs)
+        const data = blogs.map(blog => ({
+            "_id": blog._id,
+            "user": blog.user,
+            "title": blog.title,
+            "description": blog.description,
+            "img": `${req.secure ? "https" : "http"}://${req.get(
+                "host"
+            )}/images/${blog.img}`,
+            "date": blog.date,
+            "__v": 0
+        }));
+        res.json(data)
     } catch (error) {
         console.error(error.message);
         res.status(500).send("Internal Server Error");
@@ -50,7 +77,18 @@ router.get('/fetchblogs', async (req, res) => {
 router.get("/fetchuserblogs", FetchUser, async (req, res) => {
     try {
         const blogs = await Blog.find({ user: req.user.id }).populate('user', 'name',);
-        res.json(blogs);
+        const data = blogs.map(blog => ({
+            "_id": blog._id,
+            "user": blog.user,
+            "title": blog.title,
+            "description": blog.description,
+            "img": `${req.secure ? "https" : "http"}://${req.get(
+                "host"
+            )}/images/${blog.img}`,
+            "date": blog.date,
+            "__v": 0
+        }));
+        res.json(data)
     } catch (error) {
         console.log(error.message);
         res.status(500).send("Internal Server Error");
@@ -62,7 +100,18 @@ router.get("/fetchuserblogs", FetchUser, async (req, res) => {
 router.get("/:id", async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id).populate('user', 'name',);
-        res.json(blog);
+        const data = {
+            "_id": blog._id,
+            "user": blog.user,
+            "title": blog.title,
+            "description": blog.description,
+            "img": `${req.secure ? "https" : "http"}://${req.get(
+                "host"
+            )}/images/${blog.img}`,
+            "date": blog.date,
+            "__v": 0
+        }
+        res.json(data);
     } catch (error) {
         console.log(error.message);
         res.status(500).send("Internal Server Error");
