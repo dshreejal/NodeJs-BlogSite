@@ -60,7 +60,7 @@ router.get('/fetchblogs', async (req, res) => {
             "user": blog.user,
             "title": blog.title,
             "description": blog.description,
-            "img": `${req.secure ? "https" : "http"}://${req.get(
+            "img": `"https"://${req.get(
                 "host"
             )}/images/${blog.img}`,
             "date": blog.date,
